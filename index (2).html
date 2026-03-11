@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SleepWell · Dream Analysis</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:#04080f;--deep:#070d1a;--navy:#0b1327;
+  --panel:rgba(8,15,32,0.85);--glass:rgba(255,255,255,0.04);
+  --rim:rgba(255,255,255,0.07);--rim2:rgba(120,180,255,0.12);
+  --teal:#2dd4bf;--blue:#60a5fa;--indigo:#818cf8;
+  --violet:#a78bfa;--rose:#f472b6;--amber:#fbbf24;
+  --txt:#e2eeff;--txt2:#7b9bc4;--txt3:#3d5a80;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Outfit',sans-serif;background:var(--ink);color:var(--txt);min-height:100vh;overflow-x:hidden;}
+
+/* AURORA */
+.aurora{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+.ab{position:absolute;border-radius:50%;filter:blur(80px);opacity:0;animation:adrift 20s ease-in-out infinite;}
+.a1{width:700px;height:500px;top:-100px;left:-200px;background:radial-gradient(ellipse,rgba(45,212,191,.18),transparent 70%);animation-delay:0s;}
+.a2{width:600px;height:600px;top:30%;right:-150px;background:radial-gradient(ellipse,rgba(129,140,248,.15),transparent 70%);animation-delay:-7s;animation-duration:25s;}
+.a3{width:800px;height:400px;bottom:-100px;left:10%;background:radial-gradient(ellipse,rgba(167,139,250,.12),transparent 70%);animation-delay:-13s;animation-duration:22s;}
+.a4{width:500px;height:500px;top:15%;left:30%;background:radial-gradient(ellipse,rgba(96,165,250,.1),transparent 70%);animation-delay:-4s;animation-duration:28s;}
+@keyframes adrift{0%{opacity:0;transform:translate(0,0) scale(1);}15%{opacity:1;}50%{opacity:.7;transform:translate(40px,-30px) scale(1.15);}85%{opacity:1;}100%{opacity:0;transform:translate(0,0) scale(1);}}
+
+body::after{content:'';position:fixed;inset:0;z-index:1;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");background-size:180px;pointer-events:none;opacity:.5;}
+
+#bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
+
+/* LAYOUT */
+.app{position:relative;z-index:2;max-width:900px;margin:0 auto;padding:0 20px 120px;}
+
+/* MUSIC DOCK */
+.music-dock{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:100;background:rgba(8,15,32,.92);border:1px solid var(--rim2);border-radius:50px;padding:10px 20px 10px 14px;display:flex;align-items:center;gap:14px;backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);box-shadow:0 8px 40px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.03);animation:slideUp .6s .5s cubic-bezier(.34,1.56,.64,1) both;white-space:nowrap;}
+@keyframes slideUp{from{opacity:0;transform:translateX(-50%) translateY(20px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+.dock-vis{display:flex;gap:2px;align-items:flex-end;height:22px;width:30px;}
+.dock-vis span{flex:1;border-radius:2px;background:linear-gradient(to top,var(--teal),var(--indigo));animation:vis 1.3s ease-in-out infinite;}
+.dock-vis span:nth-child(1){height:6px;animation-delay:0s;}
+.dock-vis span:nth-child(2){height:18px;animation-delay:.18s;}
+.dock-vis span:nth-child(3){height:10px;animation-delay:.36s;}
+.dock-vis span:nth-child(4){height:20px;animation-delay:.54s;}
+.dock-vis span:nth-child(5){height:8px;animation-delay:.72s;}
+.dock-vis.paused span{animation-play-state:paused;height:4px!important;}
+@keyframes vis{0%,100%{transform:scaleY(.35);}50%{transform:scaleY(1);}}
+.dock-info{line-height:1.3;}
+.dock-track{font-size:.82rem;font-weight:600;color:var(--txt);letter-spacing:.3px;}
+.dock-sub{font-size:.7rem;color:var(--txt2);}
+.dock-vol{display:flex;align-items:center;gap:6px;}
+.dock-vol span{font-size:11px;color:var(--txt3);}
+.dock-vol input{-webkit-appearance:none;appearance:none;width:70px;height:3px;background:rgba(255,255,255,.1);border-radius:2px;outline:none;cursor:pointer;border:none;padding:0;}
+.dock-vol input::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--teal);box-shadow:0 0 8px rgba(45,212,191,.6);cursor:pointer;}
+.dock-btn{width:36px;height:36px;border-radius:50%;border:1px solid var(--rim2);background:rgba(45,212,191,.1);color:var(--teal);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;padding-left:1px;transition:all .2s;}
+.dock-btn:hover{background:rgba(45,212,191,.2);box-shadow:0 0 16px rgba(45,212,191,.2);}
+
+/* HERO */
+.hero{text-align:center;padding:80px 0 56px;animation:fadeDown .9s ease both;}
+.hero-emblem{position:relative;width:100px;height:100px;margin:0 auto 28px;}
+.er{position:absolute;inset:0;border-radius:50%;border:1px solid;animation:spin linear infinite;}
+.er:nth-child(1){border-color:rgba(45,212,191,.4);animation-duration:30s;}
+.er:nth-child(2){inset:8px;border-color:rgba(129,140,248,.3);animation-duration:20s;animation-direction:reverse;}
+.er:nth-child(3){inset:18px;border-color:rgba(167,139,250,.25);animation-duration:15s;}
+.ec{position:absolute;inset:28px;background:radial-gradient(circle,rgba(45,212,191,.3),rgba(129,140,248,.2));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;}
+.hero h1{font-family:'Cormorant Garamond',serif;font-size:clamp(3rem,7vw,5.5rem);font-weight:300;letter-spacing:-1px;line-height:1;background:linear-gradient(135deg,#e2eeff 0%,var(--teal) 40%,var(--indigo) 75%,var(--violet) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:12px;}
+.hero-eyebrow{font-size:.75rem;font-weight:500;letter-spacing:4px;text-transform:uppercase;color:var(--teal);margin-bottom:10px;opacity:.8;}
+.hero-sub{font-size:1rem;font-weight:300;color:var(--txt2);max-width:440px;margin:0 auto;line-height:1.7;}
+
+/* STEP INDICATOR */
+.steps-row{display:flex;justify-content:center;gap:0;margin-bottom:40px;animation:fadeUp .6s .3s ease both;}
+.step-dot{display:flex;align-items:center;}
+.step-dot:not(:last-child)::after{content:'';width:60px;height:1px;background:linear-gradient(90deg,var(--rim2),transparent);display:block;}
+.step-pip{width:36px;height:36px;border-radius:50%;border:1px solid var(--rim);background:var(--panel);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:600;color:var(--txt3);transition:all .3s;cursor:pointer;}
+.step-pip.active{border-color:var(--teal);background:rgba(45,212,191,.12);color:var(--teal);box-shadow:0 0 20px rgba(45,212,191,.2);}
+.step-pip.done{border-color:var(--indigo);background:rgba(129,140,248,.1);color:var(--indigo);}
+
+/* FORM */
+.form-step{display:none;animation:fadeIn .4s ease both;}
+.form-step.active{display:block;}
+.section-card{background:var(--panel);border:1px solid var(--rim);border-radius:28px;padding:36px 40px;backdrop-filter:blur(30px) saturate(160%);box-shadow:0 0 0 1px rgba(255,255,255,.02),0 32px 64px rgba(0,0,0,.5);position:relative;overflow:hidden;}
+.section-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);}
+.card-label{font-size:.68rem;font-weight:600;letter-spacing:3.5px;text-transform:uppercase;color:var(--teal);margin-bottom:28px;display:flex;align-items:center;gap:10px;}
+.card-label::before{content:'';width:24px;height:1px;background:linear-gradient(90deg,var(--teal),transparent);}
+.step-title{font-family:'Cormorant Garamond',serif;font-size:clamp(1.6rem,3vw,2.2rem);font-weight:300;color:var(--txt);margin-bottom:6px;line-height:1.2;}
+.step-desc{font-size:.9rem;color:var(--txt2);margin-bottom:32px;line-height:1.6;}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+@media(max-width:600px){.fgrid{grid-template-columns:1fr;}}
+.field{display:flex;flex-direction:column;gap:7px;}
+.field>label{font-size:.75rem;font-weight:500;color:var(--txt2);letter-spacing:.5px;display:flex;align-items:center;gap:6px;}
+.time-wrap input[type="time"],select,input[type="number"]{width:100%;background:rgba(255,255,255,.03);border:1px solid var(--rim);border-radius:14px;padding:13px 18px;color:var(--txt);font-family:'Outfit',sans-serif;font-size:.95rem;outline:none;transition:all .25s;-webkit-appearance:none;appearance:none;cursor:pointer;}
+.time-wrap input[type="time"]{font-size:1.1rem;font-weight:500;}
+.time-wrap input[type="time"]:focus,select:focus,input[type="number"]:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(45,212,191,.1);background:rgba(45,212,191,.04);}
+select option{background:#0b1327;}
+.sel-wrap{position:relative;}
+.sel-wrap::after{content:'⌄';position:absolute;right:16px;top:50%;transform:translateY(-52%);color:var(--txt3);pointer-events:none;font-size:18px;}
+
+/* Range slider */
+.slider-field{display:flex;flex-direction:column;gap:8px;}
+.slider-header{display:flex;justify-content:space-between;align-items:center;}
+.slider-label{font-size:.75rem;font-weight:500;color:var(--txt2);}
+.slider-val{font-size:1.1rem;font-weight:700;font-family:'Cormorant Garamond',serif;color:var(--teal);min-width:30px;text-align:right;transition:color .2s;}
+input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:6px;background:rgba(255,255,255,.08);border-radius:3px;outline:none;cursor:pointer;border:none;padding:0;}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--indigo));box-shadow:0 0 12px rgba(45,212,191,.5);cursor:pointer;transition:transform .15s;}
+input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.2);}
+.slider-ticks{display:flex;justify-content:space-between;padding:4px 2px 0;}
+.slider-ticks span{font-size:.65rem;color:var(--txt3);}
+
+/* Pills */
+.pill-group{display:flex;flex-wrap:wrap;gap:8px;}
+.pill-item{position:relative;}
+.pill-item input{position:absolute;opacity:0;pointer-events:none;}
+.pill-item label{display:flex;align-items:center;gap:7px;padding:9px 16px;background:rgba(255,255,255,.03);border:1px solid var(--rim);border-radius:50px;font-size:.82rem;font-weight:400;color:var(--txt);cursor:pointer;transition:all .2s;user-select:none;-webkit-user-select:none;}
+.pill-item label:hover{border-color:var(--rim2);color:var(--txt);background:rgba(255,255,255,.05);}
+.pill-item input:checked+label{background:rgba(45,212,191,.1);border-color:rgba(45,212,191,.4);color:var(--teal);box-shadow:0 0 16px rgba(45,212,191,.08);}
+
+/* Sleep arc */
+.sleep-arc-wrap{text-align:center;padding:20px 0;}
+.sleep-arc-svg{width:220px;height:120px;overflow:visible;}
+.sleep-hours-big{font-family:'Cormorant Garamond',serif;font-size:3.5rem;font-weight:300;color:var(--teal);line-height:1;transition:color .3s;}
+.sleep-hours-lbl{font-size:.75rem;color:var(--txt2);margin-top:4px;}
+
+/* Buttons */
+.nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:32px;gap:12px;}
+.btn-next{flex:1;padding:16px 28px;background:linear-gradient(135deg,rgba(45,212,191,.15),rgba(129,140,248,.15));border:1px solid rgba(45,212,191,.3);border-radius:50px;color:var(--teal);font-family:'Outfit',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:all .25s;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:.5px;}
+.btn-next:hover{background:linear-gradient(135deg,rgba(45,212,191,.25),rgba(129,140,248,.25));box-shadow:0 0 30px rgba(45,212,191,.15);transform:translateY(-1px);}
+.btn-back{padding:16px 22px;background:transparent;border:1px solid var(--rim);border-radius:50px;color:var(--txt3);font-family:'Outfit',sans-serif;font-size:.88rem;cursor:pointer;transition:all .2s;}
+.btn-back:hover{border-color:var(--rim2);color:var(--txt2);}
+.btn-analyze{flex:1;padding:18px 32px;background:linear-gradient(135deg,var(--teal),var(--indigo),var(--violet));background-size:200% 200%;border:none;border-radius:50px;color:white;font-family:'Outfit',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;transition:all .3s;letter-spacing:.8px;text-transform:uppercase;animation:gradMove 4s ease infinite;box-shadow:0 8px 32px rgba(45,212,191,.2);}
+.btn-analyze:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(45,212,191,.3);}
+.btn-analyze:disabled{opacity:.4;cursor:not-allowed;transform:none;animation:none;}
+@keyframes gradMove{0%,100%{background-position:0% 50%;}50%{background-position:100% 50%;}}
+
+/* LOADING */
+#loading{display:none;text-align:center;padding:100px 20px;animation:fadeIn .5s ease both;}
+#loading.show{display:block;}
+.load-orb{width:120px;height:120px;margin:0 auto 32px;position:relative;}
+.load-orb::before,.load-orb::after{content:'';position:absolute;border-radius:50%;}
+.load-orb::before{inset:0;border:1.5px solid transparent;border-top-color:var(--teal);border-right-color:var(--teal);animation:spin 1.2s linear infinite;}
+.load-orb::after{inset:14px;border:1.5px solid transparent;border-bottom-color:var(--violet);border-left-color:var(--violet);animation:spin 1.8s linear infinite reverse;}
+.load-orb-inner{position:absolute;inset:30px;background:radial-gradient(circle,rgba(45,212,191,.2),transparent);border-radius:50%;animation:psoft 2s ease infinite;}
+.load-orb-moon{position:absolute;inset:40px;font-size:30px;display:flex;align-items:center;justify-content:center;}
+.load-title{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;color:var(--txt);margin-bottom:8px;}
+.load-msg{font-size:.88rem;color:var(--txt2);animation:ptxt 2.5s ease infinite;}
+.load-progress{width:200px;height:2px;background:rgba(255,255,255,.06);border-radius:2px;margin:24px auto 0;overflow:hidden;}
+.load-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--teal),var(--indigo));border-radius:2px;transition:width .4s ease;box-shadow:0 0 8px rgba(45,212,191,.5);}
+
+/* RESULTS */
+#results{display:none;}
+#results.show{display:block;}
+
+/* Score */
+.score-hero-wrap{text-align:center;padding:64px 20px 48px;position:relative;}
+.score-bg-glow{position:absolute;inset:0;background:radial-gradient(ellipse 600px 300px at 50% 100%,rgba(45,212,191,.06),transparent);pointer-events:none;}
+.score-ring-outer{position:relative;width:200px;height:200px;margin:0 auto 28px;}
+.score-ring-svg{width:200px;height:200px;transform:rotate(-90deg);}
+.score-ring-svg circle{fill:none;stroke-width:6;stroke-linecap:round;}
+.ring-bg{stroke:rgba(255,255,255,.05);}
+.ring-glow{stroke:var(--teal);stroke-dasharray:565;stroke-dashoffset:565;transition:stroke-dashoffset 2s cubic-bezier(.4,0,.2,1),stroke .5s;filter:drop-shadow(0 0 8px rgba(45,212,191,.6));}
+.score-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.score-big{font-family:'Cormorant Garamond',serif;font-size:4rem;font-weight:300;line-height:1;background:linear-gradient(135deg,#fff,var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.score-of{font-size:.72rem;color:var(--txt3);letter-spacing:2px;text-transform:uppercase;margin-top:4px;}
+.quality-chip{display:inline-flex;align-items:center;gap:8px;padding:8px 22px;border-radius:50px;font-size:.82rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;}
+.hero-summary{font-size:.95rem;color:var(--txt2);max-width:500px;margin:0 auto;line-height:1.75;}
+
+/* Divider */
+.fancy-div{display:flex;align-items:center;gap:16px;margin:36px 0;padding:0 8px;}
+.fancy-div::before,.fancy-div::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent);}
+.fancy-div span{font-size:.65rem;letter-spacing:3px;text-transform:uppercase;color:var(--txt3);white-space:nowrap;}
+
+/* Metrics */
+.metrics-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px;}
+@media(max-width:580px){.metrics-strip{grid-template-columns:repeat(2,1fr);}}
+.metric-tile{background:var(--glass);border:1px solid var(--rim);border-radius:20px;padding:22px 16px;text-align:center;transition:all .25s;cursor:default;position:relative;overflow:hidden;}
+.metric-tile::after{content:'';position:absolute;inset:0;border-radius:inherit;background:radial-gradient(ellipse at 50% 0%,rgba(255,255,255,.04),transparent 60%);pointer-events:none;}
+.metric-tile:hover{transform:translateY(-3px);border-color:rgba(255,255,255,.1);box-shadow:0 12px 32px rgba(0,0,0,.3);}
+.metric-ico{font-size:22px;margin-bottom:10px;}
+.metric-val{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:400;color:var(--txt);margin-bottom:4px;line-height:1;}
+.metric-lbl{font-size:.67rem;color:var(--txt3);letter-spacing:.8px;text-transform:uppercase;}
+
+/* Analysis */
+.analysis-wrap{position:relative;background:var(--glass);border:1px solid var(--rim);border-radius:20px;padding:32px 36px;overflow:hidden;}
+.analysis-wrap::before{content:'';position:absolute;left:0;top:20px;bottom:20px;width:3px;background:linear-gradient(to bottom,var(--teal),var(--indigo),var(--violet));border-radius:2px;}
+.analysis-text{font-size:.93rem;line-height:1.85;color:var(--txt);padding-left:16px;opacity:.9;}
+.analysis-text p+p{margin-top:14px;}
+
+/* Tips */
+.tips-grid{display:flex;flex-direction:column;gap:12px;}
+.tip-card{display:flex;gap:16px;align-items:flex-start;background:var(--glass);border:1px solid var(--rim);border-radius:16px;padding:20px 22px;transition:all .25s;cursor:default;}
+.tip-card:hover{border-color:var(--rim2);transform:translateX(5px);background:rgba(255,255,255,.04);}
+.tip-badge{width:36px;height:36px;flex-shrink:0;border-radius:10px;background:linear-gradient(135deg,rgba(45,212,191,.2),rgba(129,140,248,.2));border:1px solid rgba(45,212,191,.2);display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;font-family:'Cormorant Garamond',serif;color:var(--teal);}
+.tip-title{font-size:.9rem;font-weight:600;color:var(--txt);margin-bottom:4px;}
+.tip-body{font-size:.84rem;color:var(--txt2);line-height:1.6;}
+
+/* Yoga Nidra */
+.yn-card{background:linear-gradient(145deg,rgba(88,28,135,.2),rgba(30,27,75,.4));border:1px solid rgba(167,139,250,.18);border-radius:28px;padding:36px 40px;position:relative;overflow:hidden;}
+.yn-card::before{content:'';position:absolute;top:-80px;right:-80px;width:300px;height:300px;background:radial-gradient(circle,rgba(167,139,250,.12),transparent 60%);border-radius:50%;pointer-events:none;}
+.yn-card::after{content:'';position:absolute;bottom:-60px;left:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(45,212,191,.08),transparent 60%);border-radius:50%;pointer-events:none;}
+.yn-hero{display:flex;gap:20px;align-items:flex-start;margin-bottom:24px;}
+.yn-lotus-wrap{width:64px;height:64px;flex-shrink:0;border-radius:50%;background:radial-gradient(circle,rgba(167,139,250,.25),rgba(88,28,135,.1));border:1px solid rgba(167,139,250,.2);display:flex;align-items:center;justify-content:center;font-size:28px;animation:floatY 5s ease-in-out infinite;}
+@keyframes floatY{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+.yn-tagline{font-size:.68rem;letter-spacing:3px;text-transform:uppercase;color:var(--violet);margin-bottom:6px;}
+.yn-heading{font-family:'Cormorant Garamond',serif;font-size:1.7rem;font-weight:300;color:var(--txt);margin-bottom:6px;line-height:1.2;}
+.yn-bio{font-size:.87rem;color:var(--txt2);line-height:1.7;}
+.yn-personalized{font-size:.87rem;color:var(--txt);background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.12);border-radius:12px;padding:16px 20px;line-height:1.7;margin-bottom:24px;}
+.yn-timeline{display:flex;flex-direction:column;gap:0;margin-bottom:28px;}
+.yn-step{display:flex;gap:16px;}
+.yn-step-side{display:flex;flex-direction:column;align-items:center;}
+.yn-step-dot{width:30px;height:30px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,rgba(124,58,237,.3),rgba(167,139,250,.2));border:1px solid rgba(167,139,250,.3);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;color:var(--violet);font-family:'Cormorant Garamond',serif;}
+.yn-step-line{width:1px;flex:1;background:rgba(167,139,250,.1);min-height:20px;}
+.yn-step-body{padding-bottom:20px;}
+.yn-step-title{font-size:.88rem;font-weight:600;color:var(--violet);margin-bottom:3px;}
+.yn-step-desc{font-size:.81rem;color:var(--txt2);line-height:1.55;}
+.yn-interactive{background:rgba(0,0,0,.2);border:1px solid rgba(167,139,250,.1);border-radius:20px;padding:32px 24px;display:flex;flex-direction:column;gap:16px;align-items:center;text-align:center;position:relative;z-index:1;}
+.yn-breath-orb{width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(167,139,250,.35),rgba(88,28,135,.15));border:2px solid rgba(167,139,250,.25);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform 4s ease-in-out,box-shadow .3s;box-shadow:0 0 30px rgba(167,139,250,.15);position:relative;}
+.yn-breath-orb::before{content:'';position:absolute;inset:-8px;border-radius:50%;border:1px solid rgba(167,139,250,.1);transition:transform 4s ease-in-out;}
+.yn-breath-orb.inhaling{transform:scale(1.45);box-shadow:0 0 60px rgba(167,139,250,.35);}
+.yn-breath-orb.inhaling::before{transform:scale(1.2);}
+.yn-breath-orb.exhaling{transform:scale(.65);box-shadow:0 0 12px rgba(167,139,250,.1);}
+.yn-breath-icon{font-size:36px;pointer-events:none;}
+.yn-breath-label{font-size:.7rem;letter-spacing:3px;text-transform:uppercase;color:var(--violet);height:16px;}
+.yn-timer-big{font-family:'Cormorant Garamond',serif;font-size:3rem;font-weight:300;color:var(--txt);display:none;line-height:1;}
+.yn-timer-big.show{display:block;}
+.yn-phase-text{font-size:.83rem;color:var(--txt2);font-style:italic;min-height:20px;}
+.yn-btn-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+.yn-btn{padding:11px 24px;border-radius:50px;border:1px solid rgba(167,139,250,.3);background:rgba(124,58,237,.12);color:var(--violet);font-family:'Outfit',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .25s;display:flex;align-items:center;gap:7px;}
+.yn-btn:hover{background:rgba(124,58,237,.25);border-color:var(--violet);box-shadow:0 0 20px rgba(124,58,237,.2);}
+.yn-btn.primary{background:linear-gradient(135deg,rgba(124,58,237,.3),rgba(167,139,250,.2));border-color:rgba(167,139,250,.4);}
+.yn-duration-row{display:flex;gap:8px;}
+.yn-dur-btn{padding:7px 16px;border-radius:50px;border:1px solid var(--rim);background:transparent;color:var(--txt2);font-size:.78rem;font-weight:500;cursor:pointer;transition:all .2s;}
+.yn-dur-btn.sel{border-color:rgba(167,139,250,.4);color:var(--violet);background:rgba(124,58,237,.1);}
+.yn-yt{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:24px;}
+@media(max-width:560px){.yn-yt{grid-template-columns:1fr;}}
+
+/* YouTube */
+.yt-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:560px){.yt-grid{grid-template-columns:1fr;}}
+.yt-card{border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.06);background:var(--glass);text-decoration:none;display:block;transition:all .28s;}
+.yt-card:hover{transform:translateY(-4px);border-color:rgba(239,68,68,.25);box-shadow:0 16px 40px rgba(0,0,0,.4);}
+.yt-thumb{aspect-ratio:16/9;position:relative;overflow:hidden;}
+.yt-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.yt-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px;border-radius:50%;background:rgba(239,68,68,.9);display:flex;align-items:center;justify-content:center;font-size:14px;color:white;padding-left:3px;transition:transform .2s;box-shadow:0 4px 20px rgba(239,68,68,.4);}
+.yt-card:hover .yt-play{transform:translate(-50%,-50%) scale(1.1);}
+.yt-meta{padding:14px 16px;}
+.yt-title{font-size:.84rem;font-weight:500;color:var(--txt);line-height:1.4;margin-bottom:5px;}
+.yt-ch{font-size:.73rem;color:var(--txt2);}
+
+/* Reset */
+.reset-row{text-align:center;margin-top:40px;}
+.btn-reset{padding:14px 32px;border-radius:50px;border:1px solid var(--rim);background:transparent;color:var(--txt2);font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:500;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:8px;}
+.btn-reset:hover{border-color:var(--rim2);color:var(--txt);}
+
+/* Error */
+.error-toast{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);border-radius:12px;padding:14px 20px;color:#fca5a5;font-size:.85rem;display:none;margin-top:14px;}
+.error-toast.show{display:block;}
+
+/* Animations */
+@keyframes fadeDown{from{opacity:0;transform:translateY(-18px);}to{opacity:1;transform:none;}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:none;}}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes psoft{0%,100%{opacity:.4;}50%{opacity:.9;}}
+@keyframes ptxt{0%,100%{opacity:.5;}50%{opacity:1;}}
+
+/* Scroll reveal */
+.reveal{opacity:0;transform:translateY(22px);transition:opacity .6s ease,transform .6s ease;}
+.reveal.visible{opacity:1;transform:none;}
+
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.07);border-radius:3px;}
+</style>
+</head>
+<body>
+
+<div class="aurora"><div class="ab a1"></div><div class="ab a2"></div><div class="ab a3"></div><div class="ab a4"></div></div>
+<canvas id="bg-canvas"></canvas>
+
+<!-- MUSIC DOCK -->
+<div class="music-dock">
+  <div class="dock-vis" id="dockVis"><span></span><span></span><span></span><span></span><span></span></div>
+  <div class="dock-info">
+    <div class="dock-track">432Hz Healing Tones</div>
+    <div class="dock-sub">Theta waves · Binaural · Pentatonic melody</div>
+  </div>
+  <div class="dock-vol">
+    <span>🔈</span>
+    <input type="range" id="volSlider" min="0" max="1" step="0.02" value="0.38">
+    <span>🔊</span>
+  </div>
+  <button class="dock-btn" id="musicToggle">⏸</button>
+</div>
+
+<div class="app">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-emblem">
+      <div class="er"></div><div class="er"></div><div class="er"></div>
+      <div class="ec">🌙</div>
+    </div>
+    <p class="hero-eyebrow">Sleep Intelligence</p>
+    <h1>SleepWell</h1>
+    <p class="hero-sub">A deep, AI-powered analysis of your sleep — your recovery, your health, your night.</p>
+  </div>
+
+  <!-- STEP DOTS -->
+  <div class="steps-row" id="stepsRow">
+    <div class="step-dot"><div class="step-pip active" id="pip0">1</div></div>
+    <div class="step-dot"><div class="step-pip" id="pip1">2</div></div>
+    <div class="step-dot"><div class="step-pip" id="pip2">3</div></div>
+    <div class="step-dot"><div class="step-pip" id="pip3">4</div></div>
+    <div class="step-dot"><div class="step-pip" id="pip4">5</div></div>
+    <div class="step-dot"><div class="step-pip" id="pip5">6</div></div>
+  </div>
+
+  <!-- STEP 1: Sleep Times -->
+  <div class="form-step active" id="step0">
+    <div class="section-card">
+      <div class="card-label">Step 1 of 6 · Sleep Schedule</div>
+      <h2 class="step-title">When did you sleep?</h2>
+      <p class="step-desc">Set your bedtime and wake-up. We'll visualise your sleep window and calculate duration instantly.</p>
+      <div class="fgrid" style="margin-bottom:28px;">
+        <div class="field"><label>🌙 Bedtime</label><div class="time-wrap"><input type="time" id="bedtime" value="23:00" title="Select your bedtime"></div></div>
+        <div class="field"><label>☀️ Wake Time</label><div class="time-wrap"><input type="time" id="waketime" value="07:00" title="Select your wake time"></div></div>
+      </div>
+      <div class="sleep-arc-wrap">
+        <svg class="sleep-arc-svg" viewBox="0 0 220 120" id="arcSvg">
+          <defs><linearGradient id="arcGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#2dd4bf"/><stop offset="100%" stop-color="#818cf8"/></linearGradient></defs>
+          <path d="M10,110 A100,100 0 0,1 210,110" fill="none" stroke="rgba(255,255,255,.05)" stroke-width="6" stroke-linecap="round"/>
+          <path id="arcFill" d="M10,110 A100,100 0 0,1 210,110" fill="none" stroke="url(#arcGrad)" stroke-width="6" stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="314" style="transition:stroke-dashoffset .8s ease"/>
+        </svg>
+        <div class="sleep-hours-big" id="sleepHrsDisplay">8h 0m</div>
+        <div class="sleep-hours-lbl">Total sleep window</div>
+      </div>
+      <div class="fgrid" style="margin-top:24px;">
+        <div class="field"><label>🔄 Times Woken Up</label><input type="number" id="wakeups" min="0" max="20" value="1"></div>
+        <div class="field"><label>🧍 Your Age</label><input type="number" id="age" min="5" max="100" value="28"></div>
+        <div class="field"><label>⚧ Gender</label><div class="sel-wrap"><select id="gender"><option value="male">Male</option><option value="female" selected>Female</option><option value="other">Non-binary / Other</option><option value="prefer_not">Prefer not to say</option></select></div></div>
+        <div class="field"><label>😴 Did You Nap Today?</label><div class="sel-wrap"><select id="nap"><option value="none" selected>No nap</option><option value="short">Short nap (under 20 min)</option><option value="medium">Medium nap (20–60 min)</option><option value="long">Long nap (over 1 hr)</option></select></div></div>
+      </div>
+      <div class="nav-row"><button class="btn-next" onclick="goStep(1)">Continue →</button></div>
+    </div>
+  </div>
+
+  <!-- STEP 2: Quality & Symptoms -->
+  <div class="form-step" id="step1">
+    <div class="section-card">
+      <div class="card-label">Step 2 of 6 · Sleep Quality</div>
+      <h2 class="step-title">How did it feel?</h2>
+      <p class="step-desc">Your subjective experience and physical symptoms are critical diagnostic signals.</p>
+      <div style="display:flex;flex-direction:column;gap:18px;margin-bottom:24px;">
+        <div class="field"><label>😴 Overall Sleep Quality</label><div class="sel-wrap"><select id="quality"><option value="excellent">Excellent — fully rested</option><option value="good">Good — mostly rested</option><option value="fair" selected>Fair — somewhat tired</option><option value="poor">Poor — very tired</option><option value="terrible">Terrible — exhausted</option></select></div></div>
+        <div class="field"><label>🌅 Mood on Waking</label><div class="sel-wrap"><select id="mood"><option value="refreshed">Refreshed &amp; alert</option><option value="okay">Okay, needed a moment</option><option value="groggy" selected>Groggy</option><option value="anxious">Anxious / stressed</option><option value="depressed">Low / depressed energy</option></select></div></div>
+        <div class="fgrid">
+          <div class="slider-field">
+            <div class="slider-header"><span class="slider-label">😓 Stress Level (1–10)</span><span class="slider-val" id="stressVal">5</span></div>
+            <input type="range" id="stress" min="1" max="10" value="5">
+            <div class="slider-ticks"><span>Calm</span><span>Moderate</span><span>High</span><span>Extreme</span></div>
+          </div>
+          <div class="slider-field">
+            <div class="slider-header"><span class="slider-label">🧠 Anxiety Level (1–10)</span><span class="slider-val" id="anxietyVal">3</span></div>
+            <input type="range" id="anxiety" min="1" max="10" value="3">
+            <div class="slider-ticks"><span>None</span><span>Mild</span><span>Moderate</span><span>Severe</span></div>
+          </div>
+        </div>
+        <div class="field"><label>⏱ Time to Fall Asleep</label><div class="sel-wrap"><select id="fallasleep"><option value="under5">Under 5 minutes</option><option value="5to15" selected>5–15 minutes</option><option value="15to30">15–30 minutes</option><option value="30to60">30–60 minutes</option><option value="over60">More than 1 hour</option></select></div></div>
+        <div class="field"><label>🌙 Sleep Consistency (last 7 days)</label><div class="sel-wrap"><select id="consistency"><option value="very_consistent">Very consistent — same time daily</option><option value="mostly" selected>Mostly consistent ±1 hr</option><option value="variable">Variable ±2 hrs</option><option value="chaotic">Very irregular / chaotic</option></select></div></div>
+      </div>
+      <div class="card-label" style="margin-bottom:16px;">Physical Symptoms Last Night</div>
+      <div class="pill-group">
+        <div class="pill-item"><input type="checkbox" id="s1" name="s" value="snoring"><label for="s1">😤 Snoring</label></div>
+        <div class="pill-item"><input type="checkbox" id="s2" name="s" value="apnea"><label for="s2">😮‍💨 Breathing pauses</label></div>
+        <div class="pill-item"><input type="checkbox" id="s3" name="s" value="nightmares"><label for="s3">😰 Nightmares</label></div>
+        <div class="pill-item"><input type="checkbox" id="s4" name="s" value="restless"><label for="s4">🦵 Restless legs</label></div>
+        <div class="pill-item"><input type="checkbox" id="s5" name="s" value="sweating"><label for="s5">💧 Night sweats</label></div>
+        <div class="pill-item"><input type="checkbox" id="s6" name="s" value="headache"><label for="s6">🤕 Morning headache</label></div>
+        <div class="pill-item"><input type="checkbox" id="s7" name="s" value="drymouth"><label for="s7">👄 Dry mouth</label></div>
+        <div class="pill-item"><input type="checkbox" id="s8" name="s" value="heartburn"><label for="s8">🔥 Heartburn / acid</label></div>
+        <div class="pill-item"><input type="checkbox" id="s9" name="s" value="paralysis"><label for="s9">😶 Sleep paralysis</label></div>
+        <div class="pill-item"><input type="checkbox" id="s10" name="s" value="sleepwalk"><label for="s10">🚶 Sleepwalking</label></div>
+      </div>
+      <div class="nav-row"><button class="btn-back" onclick="goStep(0)">← Back</button><button class="btn-next" onclick="goStep(2)">Continue →</button></div>
+    </div>
+  </div>
+
+  <!-- STEP 3: Diet & Substances -->
+  <div class="form-step" id="step2">
+    <div class="section-card">
+      <div class="card-label">Step 3 of 6 · Diet &amp; Substances</div>
+      <h2 class="step-title">What did you consume?</h2>
+      <p class="step-desc">Food timing, stimulants, and what you drink are powerful modulators of sleep chemistry.</p>
+      <div class="fgrid" style="margin-bottom:20px;">
+        <div class="field"><label>☕ Caffeine Cups (total)</label><input type="number" id="caffeine" min="0" max="20" value="2"></div>
+        <div class="field"><label>🕐 Last Caffeine At</label><div class="sel-wrap"><select id="lastcaffeine"><option value="morning">Morning (before noon)</option><option value="afternoon" selected>Afternoon (12–4pm)</option><option value="evening">Evening (4–7pm)</option><option value="night">Night (after 7pm)</option><option value="none">Didn't have caffeine</option></select></div></div>
+        <div class="field"><label>🍷 Alcohol Last Night</label><div class="sel-wrap"><select id="alcohol"><option value="none" selected>None</option><option value="light">1 drink</option><option value="moderate">2–3 drinks</option><option value="heavy">4+ drinks</option></select></div></div>
+        <div class="field"><label>🍽 Last Meal Timing</label><div class="sel-wrap"><select id="lastmeal"><option value="early">Early (before 6pm)</option><option value="normal" selected>Normal (6–8pm)</option><option value="late">Late (8–10pm)</option><option value="very_late">Very late (after 10pm)</option></select></div></div>
+        <div class="field"><label>💊 Sleep Aids / Supplements</label><div class="sel-wrap"><select id="sleepaid"><option value="none" selected>None</option><option value="melatonin">Melatonin</option><option value="magnesium">Magnesium</option><option value="prescription">Prescription sleep med</option><option value="herbal">Herbal (valerian, CBD…)</option><option value="otc">OTC antihistamine</option></select></div></div>
+        <div class="field"><label>💧 Hydration Yesterday</label><div class="sel-wrap"><select id="hydration"><option value="poor">Poor — under 4 glasses</option><option value="okay" selected>Okay — 4–6 glasses</option><option value="good">Good — 6–8 glasses</option><option value="excellent">Excellent — 8+ glasses</option></select></div></div>
+      </div>
+      <div class="card-label" style="margin-bottom:14px;">Dietary Habits</div>
+      <div class="pill-group">
+        <div class="pill-item"><input type="checkbox" id="d1" name="d" value="heavy_dinner"><label for="d1">🍖 Heavy dinner</label></div>
+        <div class="pill-item"><input type="checkbox" id="d2" name="d" value="sugar_spike"><label for="d2">🍬 Sugar / sweets at night</label></div>
+        <div class="pill-item"><input type="checkbox" id="d3" name="d" value="spicy_food"><label for="d3">🌶 Spicy food at night</label></div>
+        <div class="pill-item"><input type="checkbox" id="d4" name="d" value="skipped_meals"><label for="d4">🚫 Skipped meals</label></div>
+        <div class="pill-item"><input type="checkbox" id="d5" name="d" value="nicotine"><label for="d5">🚬 Nicotine / smoking</label></div>
+        <div class="pill-item"><input type="checkbox" id="d6" name="d" value="energy_drink"><label for="d6">⚡ Energy drinks</label></div>
+      </div>
+      <div class="nav-row"><button class="btn-back" onclick="goStep(1)">← Back</button><button class="btn-next" onclick="goStep(3)">Continue →</button></div>
+    </div>
+  </div>
+
+  <!-- STEP 4: Activity & Exercise -->
+  <div class="form-step" id="step3">
+    <div class="section-card">
+      <div class="card-label">Step 4 of 6 · Physical Activity</div>
+      <h2 class="step-title">How active were you?</h2>
+      <p class="step-desc">Exercise timing, intensity, and daily movement patterns profoundly affect sleep depth and onset.</p>
+      <div class="fgrid" style="margin-bottom:20px;">
+        <div class="field"><label>🏃 Exercise Intensity</label><div class="sel-wrap"><select id="exercise"><option value="none">No exercise</option><option value="light">Light — walk, gentle yoga</option><option value="moderate" selected>Moderate — 30–60 min cardio</option><option value="intense">Intense — HIIT, weights</option><option value="very_intense">Very intense — race / marathon</option></select></div></div>
+        <div class="field"><label>🕐 Exercise Timing</label><div class="sel-wrap"><select id="exercisetime"><option value="morning">Morning (before noon)</option><option value="afternoon" selected>Afternoon (12–5pm)</option><option value="evening">Evening (5–8pm)</option><option value="night">Night (after 8pm)</option><option value="none">Did not exercise</option></select></div></div>
+        <div class="field"><label>⚖️ Lifestyle Type</label><div class="sel-wrap"><select id="lifestyle"><option value="sedentary">Sedentary — desk job, minimal movement</option><option value="lightly_active">Lightly active — some walking</option><option value="active" selected>Moderately active</option><option value="veryactive">Very active / athlete</option><option value="shift">Shift / night worker</option><option value="student">Student</option></select></div></div>
+        <div class="field"><label>🚶 Daily Steps (approx)</label><div class="sel-wrap"><select id="steps"><option value="low">Under 3,000</option><option value="moderate" selected>3,000–8,000</option><option value="high">8,000–12,000</option><option value="very_high">Over 12,000</option></select></div></div>
+        <div class="field"><label>🪑 Sitting Hours (today)</label><div class="sel-wrap"><select id="sitting"><option value="low">Under 4 hours</option><option value="moderate" selected>4–7 hours</option><option value="high">7–10 hours</option><option value="very_high">Over 10 hours</option></select></div></div>
+        <div class="field"><label>☀️ Sunlight Exposure</label><div class="sel-wrap"><select id="sunlight"><option value="none">None — stayed indoors</option><option value="little">Little — under 15 min</option><option value="moderate" selected>Moderate — 15–60 min</option><option value="lots">Lots — over 1 hour</option></select></div></div>
+      </div>
+      <div class="card-label" style="margin-bottom:14px;">Activity Tags</div>
+      <div class="pill-group">
+        <div class="pill-item"><input type="checkbox" id="a1" name="a" value="yoga"><label for="a1">🧘 Yoga / stretching</label></div>
+        <div class="pill-item"><input type="checkbox" id="a2" name="a" value="meditation"><label for="a2">🪷 Meditation</label></div>
+        <div class="pill-item"><input type="checkbox" id="a3" name="a" value="swim"><label for="a3">🏊 Swimming</label></div>
+        <div class="pill-item"><input type="checkbox" id="a4" name="a" value="breathwork"><label for="a4">🌬 Breathwork</label></div>
+        <div class="pill-item"><input type="checkbox" id="a5" name="a" value="sports"><label for="a5">⚽ Team sports</label></div>
+        <div class="pill-item"><input type="checkbox" id="a6" name="a" value="sauna"><label for="a6">🧖 Sauna / hot bath</label></div>
+      </div>
+      <div class="nav-row"><button class="btn-back" onclick="goStep(2)">← Back</button><button class="btn-next" onclick="goStep(4)">Continue →</button></div>
+    </div>
+  </div>
+
+  <!-- STEP 5: Environment & Mental Health -->
+  <div class="form-step" id="step4">
+    <div class="section-card">
+      <div class="card-label">Step 5 of 6 · Environment &amp; Mind</div>
+      <h2 class="step-title">Your sleep environment</h2>
+      <p class="step-desc">Room conditions, mental state, and evening routines can make or break your sleep quality.</p>
+      <div class="fgrid" style="margin-bottom:20px;">
+        <div class="field"><label>📱 Screens Before Bed</label><div class="sel-wrap"><select id="screens"><option value="none">No screens</option><option value="little">Less than 30 min</option><option value="moderate" selected>30 min – 1 hr</option><option value="heavy">1–2 hours</option><option value="excessive">More than 2 hrs</option></select></div></div>
+        <div class="field"><label>💡 Room Darkness</label><div class="sel-wrap"><select id="darkness"><option value="pitch_dark">Pitch dark — blackout curtains</option><option value="dark" selected>Dark — mostly blocked</option><option value="some_light">Some light — streetlamps etc.</option><option value="bright">Bright — significant light</option></select></div></div>
+        <div class="field"><label>🌡 Room Temperature</label><div class="sel-wrap"><select id="roomtemp"><option value="cold">Cold (under 16°C / 61°F)</option><option value="cool" selected>Cool (16–19°C / 61–66°F)</option><option value="comfortable">Comfortable (19–22°C / 66–72°F)</option><option value="warm">Warm (22–25°C / 72–77°F)</option><option value="hot">Hot (over 25°C / 77°F)</option></select></div></div>
+        <div class="field"><label>🔊 Noise Level</label><div class="sel-wrap"><select id="noise"><option value="silent">Silent</option><option value="quiet" selected>Quiet</option><option value="some_noise">Some noise — traffic etc.</option><option value="noisy">Noisy — hard to block out</option></select></div></div>
+        <div class="field"><label>🛏 Bed Comfort</label><div class="sel-wrap"><select id="bedcomfort"><option value="excellent">Excellent</option><option value="good" selected>Good</option><option value="average">Average</option><option value="poor">Poor — uncomfortable</option></select></div></div>
+        <div class="field"><label>👫 Sleep Partner</label><div class="sel-wrap"><select id="partner"><option value="alone" selected>Sleep alone</option><option value="partner_quiet">Partner — doesn't disturb</option><option value="partner_disturbs">Partner — disturbs sleep</option><option value="pet">Pet in the bed</option></select></div></div>
+        <div class="field"><label>📵 Phone in Bedroom?</label><div class="sel-wrap"><select id="phone"><option value="no">No — kept outside</option><option value="silent">Yes but silent / face-down</option><option value="yes" selected>Yes — normal mode</option><option value="checking">Yes — I check it at night</option></select></div></div>
+        <div class="field"><label>🧠 Mental Health (general)</label><div class="sel-wrap"><select id="mentalhealth"><option value="excellent">Excellent — stable and calm</option><option value="good" selected>Good — generally okay</option><option value="mild_issues">Mild anxiety or low mood</option><option value="moderate_issues">Moderate anxiety / depression</option><option value="severe_issues">Significant mental health challenges</option></select></div></div>
+      </div>
+      <div class="card-label" style="margin-bottom:14px;">Evening Routine</div>
+      <div class="pill-group">
+        <div class="pill-item"><input type="checkbox" id="r1" name="r" value="wind_down"><label for="r1">🌙 Wind-down routine</label></div>
+        <div class="pill-item"><input type="checkbox" id="r2" name="r" value="hot_shower"><label for="r2">🚿 Hot shower before bed</label></div>
+        <div class="pill-item"><input type="checkbox" id="r3" name="r" value="reading"><label for="r3">📖 Reading (physical book)</label></div>
+        <div class="pill-item"><input type="checkbox" id="r4" name="r" value="journaling"><label for="r4">📓 Journaling</label></div>
+        <div class="pill-item"><input type="checkbox" id="r5" name="r" value="gratitude"><label for="r5">🙏 Gratitude practice</label></div>
+        <div class="pill-item"><input type="checkbox" id="r6" name="r" value="work_at_night"><label for="r6">💻 Working late at night</label></div>
+        <div class="pill-item"><input type="checkbox" id="r7" name="r" value="argument"><label for="r7">😤 Argument / conflict</label></div>
+        <div class="pill-item"><input type="checkbox" id="r8" name="r" value="news"><label for="r8">📰 Watching news</label></div>
+      </div>
+      <div style="margin-top:20px;">
+        <div class="slider-field">
+          <div class="slider-header"><span class="slider-label">😔 Emotional Burden Today (1–10)</span><span class="slider-val" id="emotionVal">4</span></div>
+          <input type="range" id="emotion" min="1" max="10" value="4">
+          <div class="slider-ticks"><span>Light</span><span>Manageable</span><span>Heavy</span><span>Overwhelming</span></div>
+        </div>
+      </div>
+      <div class="nav-row"><button class="btn-back" onclick="goStep(3)">← Back</button><button class="btn-next" onclick="goStep(5)">Continue →</button></div>
+    </div>
+  </div>
+
+  <!-- STEP 6: Review & Analyse -->
+  <div class="form-step" id="step5">
+    <div class="section-card">
+      <div class="card-label">Step 6 of 6 · Review</div>
+      <h2 class="step-title">Ready to analyse</h2>
+      <p class="step-desc">Here's a summary of everything you've told us. Tap Analyse for your personalised sleep report.</p>
+      <div id="summaryGrid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:28px;"></div>
+      <button class="btn-analyze" id="analyzeBtn" onclick="analyzeSleep()">✦ Analyse My Sleep</button>
+      <div class="error-toast" id="errorMsg"></div>
+      <div class="nav-row" style="margin-top:16px;"><button class="btn-back" onclick="goStep(4)">← Back</button></div>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div id="loading">
+    <div class="load-orb"><div class="load-orb-inner"></div><div class="load-orb-moon">🌙</div></div>
+    <div class="load-title">Analysing your sleep…</div>
+    <div class="load-msg" id="loadMsg">Reading circadian patterns</div>
+    <div class="load-progress"><div class="load-bar" id="loadBar"></div></div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results">
+    <div class="section-card reveal" style="margin-bottom:20px;">
+      <div class="score-hero-wrap">
+        <div class="score-bg-glow"></div>
+        <div class="score-ring-outer">
+          <svg class="score-ring-svg" viewBox="0 0 200 200">
+            <circle class="ring-bg" cx="100" cy="100" r="90"/>
+            <circle class="ring-glow" id="ringGlow" cx="100" cy="100" r="90"/>
+          </svg>
+          <div class="score-inner"><div class="score-big" id="scoreNum">—</div><div class="score-of">/ 100</div></div>
+        </div>
+        <div class="quality-chip" id="qualChip">—</div>
+        <p class="hero-summary" id="heroSummary">—</p>
+      </div>
+    </div>
+
+    <div class="fancy-div reveal"><span>Key Metrics</span></div>
+    <div class="metrics-strip reveal" id="metricsStrip"></div>
+
+    <div class="fancy-div reveal"><span>AI Analysis</span></div>
+    <div class="analysis-wrap reveal"><div class="analysis-text" id="analysisText"></div></div>
+
+    <div class="fancy-div reveal"><span>Recommendations</span></div>
+    <div class="tips-grid reveal" id="tipsGrid"></div>
+
+    <div class="fancy-div reveal"><span>Yoga Nidra · Yogic Sleep</span></div>
+    <div class="yn-card reveal">
+      <div class="yn-hero">
+        <div class="yn-lotus-wrap">🪷</div>
+        <div>
+          <div class="yn-tagline">Ancient Restorative Practice</div>
+          <h3 class="yn-heading">Yoga Nidra</h3>
+          <p class="yn-bio">A guided state of conscious deep rest. 20 minutes of Yoga Nidra is equivalent to ~2 hours of restorative sleep. It calms cortisol, deepens delta-wave recovery, and restructures your relationship with rest.</p>
+        </div>
+      </div>
+      <div class="yn-personalized" id="ynPersonalized">—</div>
+      <div class="yn-timeline">
+        <div class="yn-step"><div class="yn-step-side"><div class="yn-step-dot">I</div><div class="yn-step-line"></div></div><div class="yn-step-body"><div class="yn-step-title">Physical Settling (2 min)</div><div class="yn-step-desc">Lie flat, arms relaxed away from the body. Close eyes. Release every last ounce of effort.</div></div></div>
+        <div class="yn-step"><div class="yn-step-side"><div class="yn-step-dot">II</div><div class="yn-step-line"></div></div><div class="yn-step-body"><div class="yn-step-title">Sankalpa — Intention (1 min)</div><div class="yn-step-desc">Whisper mentally: "I sleep deeply and wake fully restored." Feel it as already true in the body.</div></div></div>
+        <div class="yn-step"><div class="yn-step-side"><div class="yn-step-dot">III</div><div class="yn-step-line"></div></div><div class="yn-step-body"><div class="yn-step-title">Body Rotation (8 min)</div><div class="yn-step-desc">Move awareness rapidly through each body part — thumb, palm, wrist, elbow — without any movement.</div></div></div>
+        <div class="yn-step"><div class="yn-step-side"><div class="yn-step-dot">IV</div><div class="yn-step-line"></div></div><div class="yn-step-body"><div class="yn-step-title">Breath Counting (5 min)</div><div class="yn-step-desc">Count each breath from 27 down to 1. If you lose count, simply begin again — without judgement.</div></div></div>
+        <div class="yn-step"><div class="yn-step-side"><div class="yn-step-dot">V</div><div class="yn-step-line"></div></div><div class="yn-step-body"><div class="yn-step-title">Pairs of Opposites (4 min)</div><div class="yn-step-desc">Feel heaviness / lightness, warmth / cold. Experience both in the body fully and completely.</div></div></div>
+        <div class="yn-step"><div class="yn-step-side"><div class="yn-step-dot">VI</div></div><div class="yn-step-body"><div class="yn-step-title">Visualisation (5 min)</div><div class="yn-step-desc">Let rapid images rise — a flame, a lotus, a moonlit lake, a starfield. Watch them appear and dissolve.</div></div></div>
+      </div>
+      <div class="yn-interactive">
+        <div class="yn-duration-row">
+          <button class="yn-dur-btn sel" onclick="setYNDur(20,this)">20 min</button>
+          <button class="yn-dur-btn" onclick="setYNDur(30,this)">30 min</button>
+          <button class="yn-dur-btn" onclick="setYNDur(45,this)">45 min</button>
+        </div>
+        <div class="yn-breath-orb" id="ynOrb" onclick="toggleYN()"><div class="yn-breath-icon">🪷</div></div>
+        <div class="yn-breath-label" id="ynBreathLbl">tap to begin</div>
+        <div class="yn-timer-big" id="ynTimerBig">20:00</div>
+        <div class="yn-phase-text" id="ynPhaseTxt">Select a duration and tap the lotus to begin your session</div>
+        <div class="yn-btn-row">
+          <button class="yn-btn primary" id="ynMainBtn" onclick="toggleYN()">🧘 Begin Session</button>
+          <button class="yn-btn" onclick="resetYN()">↺ Reset</button>
+        </div>
+      </div>
+      <div class="yn-yt" id="ynYtGrid"></div>
+    </div>
+
+    <div class="fancy-div reveal"><span>Watch &amp; Learn</span></div>
+    <div class="yt-grid reveal" id="ytGrid"></div>
+
+    <div class="reset-row reveal">
+      <button class="btn-reset" onclick="resetAll()">↩ Start New Analysis</button>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+/* ── STARFIELD ── */
+const cvs=document.getElementById('bg-canvas'),cx=cvs.getContext('2d');
+let W,H,mouse={x:0,y:0};
+const stars=Array.from({length:180},()=>({x:Math.random()*6000,y:Math.random()*6000,r:Math.random()*1.4+.2,o:Math.random(),s:Math.random()*.0025+.0005,d:Math.random()<.5?1:-1}));
+function rCvs(){W=cvs.width=window.innerWidth;H=cvs.height=window.innerHeight;}
+rCvs(); window.addEventListener('resize',rCvs);
+document.addEventListener('mousemove',e=>{mouse.x=e.clientX;mouse.y=e.clientY;});
+(function draw(){
+  cx.clearRect(0,0,W,H);
+  stars.forEach(s=>{
+    s.o+=s.s*s.d; if(s.o>1||s.o<.05)s.d*=-1;
+    const dx=(s.x%W)-(mouse.x||W/2),dy=(s.y%H)-(mouse.y||H/2);
+    const dist=Math.sqrt(dx*dx+dy*dy),glow=dist<180?.25*(1-dist/180):0;
+    cx.beginPath(); cx.arc(s.x%W,s.y%H,s.r+glow*2,0,Math.PI*2);
+    cx.fillStyle=`rgba(180,220,255,${Math.min(1,s.o+glow)})`; cx.fill();
+  });
+  requestAnimationFrame(draw);
+})();
+
+/* ── AUDIO ENGINE ── */
+const AC=new(window.AudioContext||window.webkitAudioContext)();
+let masterGain,reverbNode,wetBus,dryBus,audioStarted=false,isPlaying=true,melTO=null;
+
+function mkReverb(){
+  const sr=AC.sampleRate,len=sr*5,buf=AC.createBuffer(2,len,sr);
+  for(let c=0;c<2;c++){const d=buf.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.2);}
+  const v=AC.createConvolver();v.buffer=buf;return v;
+}
+function mkPink(){
+  const sr=AC.sampleRate,len=sr*6,buf=AC.createBuffer(1,len,sr),d=buf.getChannelData(0);
+  let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
+  for(let i=0;i<len;i++){const w=Math.random()*2-1;b0=.99886*b0+w*.0555179;b1=.99332*b1+w*.0750759;b2=.969*b2+w*.153852;b3=.8665*b3+w*.3104856;b4=.55*b4+w*.5329522;b5=-.7616*b5-w*.016898;d[i]=(b0+b1+b2+b3+b4+b5+b6+w*.5362)*.11;b6=w*.115926;}
+  const s=AC.createBufferSource();s.buffer=buf;s.loop=true;return s;
+}
+function mkPad(freq,gainVal,lfoHz){
+  const o=AC.createOscillator(),g=AC.createGain(),lf=AC.createOscillator(),lg=AC.createGain();
+  o.type='sine';o.frequency.value=freq;lf.type='sine';lf.frequency.value=lfoHz||.07;
+  lg.gain.value=freq*.0028;lf.connect(lg);lg.connect(o.frequency);
+  g.gain.value=0;g.gain.linearRampToValueAtTime(gainVal,AC.currentTime+5);
+  o.connect(g);o.start();lf.start();return g;
+}
+function playNote(freq,when,dur,vol){
+  const o=AC.createOscillator(),o2=AC.createOscillator(),g=AC.createGain();
+  o.type='sine';o.frequency.value=freq;o2.type='sine';o2.frequency.value=freq*2.001;
+  g.gain.setValueAtTime(0,when);g.gain.linearRampToValueAtTime(vol||.055,when+.04);
+  g.gain.exponentialRampToValueAtTime((vol||.055)*.25,when+.5);g.gain.exponentialRampToValueAtTime(.0001,when+(dur||2));
+  o.connect(g);o2.connect(g);g.connect(wetBus);o.start(when);o2.start(when);o.stop(when+(dur||2)+.1);o2.stop(when+(dur||2)+.1);
+}
+const PENTA=[216,243,272.25,324,364.5,432,486,544.5,648,729];
+function schedMelody(){
+  const seq=[4,2,0,3,1,7,5,4,9,6,3,4],gaps=[3,3.5,4.5,2.8,4,5.5,3.2,3,4.8,3.5,4,6];
+  let t=AC.currentTime+1.5;
+  seq.forEach((ni,i)=>{playNote(PENTA[ni],t,2.2,.05);if(i%3===2)playNote(PENTA[ni]*.5,t+.1,3,.022);t+=gaps[i];});
+  melTO=setTimeout(schedMelody,gaps.reduce((a,b)=>a+b,1500));
+}
+function mkBinaural(base,beat){
+  const m=AC.createChannelMerger(2),oL=AC.createOscillator(),oR=AC.createOscillator(),gL=AC.createGain(),gR=AC.createGain();
+  oL.type='sine';oL.frequency.value=base||200;oR.type='sine';oR.frequency.value=(base||200)+(beat||6);
+  gL.gain.value=.035;gR.gain.value=.035;oL.connect(gL);oR.connect(gR);gL.connect(m,0,0);gR.connect(m,0,1);m.connect(masterGain);oL.start();oR.start();
+}
+function buildAmbience(){
+  masterGain=AC.createGain();masterGain.gain.value=.38;
+  reverbNode=mkReverb();wetBus=AC.createGain();wetBus.gain.value=.65;dryBus=AC.createGain();dryBus.gain.value=.35;
+  wetBus.connect(reverbNode);reverbNode.connect(masterGain);dryBus.connect(masterGain);masterGain.connect(AC.destination);
+  [[108,.09,.05],[216,.065,.07],[432,.05,.09],[540,.038,.06],[648,.028,.08],[324,.04,.05]].forEach(([f,g,l])=>{const p=mkPad(f,g,l);p.connect(wetBus);p.connect(dryBus);});
+  mkBinaural(200,6);
+  const noise=mkPink(),nf=AC.createBiquadFilter(),ng=AC.createGain();
+  nf.type='lowpass';nf.frequency.value=400;nf.Q.value=.5;ng.gain.value=.009;
+  noise.connect(nf);nf.connect(ng);ng.connect(masterGain);noise.start();
+  schedMelody();
+}
+function startAudio(){
+  if(audioStarted)return;audioStarted=true;
+  if(AC.state==='suspended')AC.resume();
+  buildAmbience();
+}
+document.addEventListener('click',startAudio);
+document.addEventListener('touchstart',startAudio);
+document.getElementById('volSlider').addEventListener('input',e=>{
+  if(masterGain){masterGain.gain.cancelScheduledValues(AC.currentTime);masterGain.gain.linearRampToValueAtTime(+e.target.value,AC.currentTime+.08);}
+});
+document.getElementById('musicToggle').addEventListener('click',()=>{
+  startAudio();
+  if(AC.state==='running'){AC.suspend();isPlaying=false;document.getElementById('musicToggle').textContent='▶';document.getElementById('dockVis').classList.add('paused');}
+  else{AC.resume();isPlaying=true;document.getElementById('musicToggle').textContent='⏸';document.getElementById('dockVis').classList.remove('paused');}
+});
+
+/* ── SLEEP ARC ── */
+function updateArc(){
+  const bt=document.getElementById('bedtime').value||'23:00',wt=document.getElementById('waketime').value||'07:00';
+  const[bh,bm]=bt.split(':').map(Number),[wh,wm]=wt.split(':').map(Number);
+  let mins=(wh*60+wm)-(bh*60+bm);if(mins<0)mins+=1440;
+  const hrs=mins/60,h=Math.floor(hrs),m=Math.round((hrs-h)*60);
+  document.getElementById('sleepHrsDisplay').textContent=`${h}h ${m}m`;
+  document.getElementById('arcFill').style.strokeDashoffset=(314*(1-Math.min(1,hrs/12))).toFixed(1);
+  document.getElementById('sleepHrsDisplay').style.color=hrs>=7&&hrs<=9?'var(--teal)':hrs<6?'var(--rose)':'var(--amber)';
+}
+document.getElementById('bedtime').addEventListener('change',updateArc);
+document.getElementById('waketime').addEventListener('change',updateArc);
+updateArc();
+document.getElementById('stress').addEventListener('input',e=>{
+  const v=+e.target.value,el=document.getElementById('stressVal');
+  el.textContent=v;el.style.color=v<=3?'var(--teal)':v<=6?'var(--amber)':'var(--rose)';
+});
+document.getElementById('anxiety').addEventListener('input',e=>{
+  const v=+e.target.value,el=document.getElementById('anxietyVal');
+  el.textContent=v;el.style.color=v<=3?'var(--teal)':v<=6?'var(--amber)':'var(--rose)';
+});
+document.getElementById('emotion').addEventListener('input',e=>{
+  const v=+e.target.value,el=document.getElementById('emotionVal');
+  el.textContent=v;el.style.color=v<=3?'var(--teal)':v<=6?'var(--amber)':'var(--rose)';
+});
+
+/* ── MULTI-STEP ── */
+let curStep=0;
+const TOTAL=6;
+function goStep(n){
+  if(n===5)buildSummary();
+  document.getElementById('step'+curStep).classList.remove('active');
+  document.getElementById('pip'+curStep).classList.remove('active');
+  document.getElementById('pip'+curStep).classList.add('done');
+  curStep=n;
+  document.getElementById('step'+n).classList.add('active');
+  document.getElementById('pip'+n).classList.remove('done');
+  document.getElementById('pip'+n).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function gv(id){const el=document.getElementById(id);return el?el.value:'';}
+function gcb(name){return[...document.querySelectorAll(`input[name="${name}"]:checked`)].map(e=>e.value);}
+function getFormData(){
+  const bt=gv('bedtime')||'23:00',wt=gv('waketime')||'07:00';
+  const[bh,bm]=bt.split(':').map(Number),[wh,wm]=wt.split(':').map(Number);
+  let mins=(wh*60+wm)-(bh*60+bm);if(mins<0)mins+=1440;
+  return{
+    // Step 1
+    bedtime:bt,waketime:wt,duration:(mins/60).toFixed(2),
+    wakeups:+gv('wakeups')||0,age:+gv('age')||25,
+    gender:gv('gender'),nap:gv('nap'),
+    // Step 2
+    quality:gv('quality'),mood:gv('mood'),
+    stress:gv('stress'),anxiety:gv('anxiety'),
+    fallasleep:gv('fallasleep'),consistency:gv('consistency'),
+    symptoms:gcb('s'),
+    // Step 3
+    caffeine:+gv('caffeine')||0,lastcaffeine:gv('lastcaffeine'),
+    alcohol:gv('alcohol'),lastmeal:gv('lastmeal'),
+    sleepaid:gv('sleepaid'),hydration:gv('hydration'),
+    diet:gcb('d'),
+    // Step 4
+    exercise:gv('exercise'),exercisetime:gv('exercisetime'),
+    lifestyle:gv('lifestyle'),steps:gv('steps'),
+    sitting:gv('sitting'),sunlight:gv('sunlight'),
+    activities:gcb('a'),
+    // Step 5
+    screens:gv('screens'),darkness:gv('darkness'),
+    roomtemp:gv('roomtemp'),noise:gv('noise'),
+    bedcomfort:gv('bedcomfort'),partner:gv('partner'),
+    phone:gv('phone'),mentalhealth:gv('mentalhealth'),
+    routine:gcb('r'),emotion:gv('emotion')
+  };
+}
+function buildSummary(){
+  const d=getFormData();
+  const rows=[
+    ['🌙 Bedtime',d.bedtime],['☀️ Wake',d.waketime],
+    ['⏱ Duration',d.duration+'h'],['🔄 Wakeups',d.wakeups],
+    ['😴 Quality',d.quality],['😓 Stress',d.stress+'/10'],
+    ['🧠 Anxiety',d.anxiety+'/10'],['😔 Emotion',d.emotion+'/10'],
+    ['☕ Caffeine',d.caffeine+' cups'],['🍷 Alcohol',d.alcohol],
+    ['🏃 Exercise',d.exercise],['📱 Screens',d.screens],
+    ['💡 Darkness',d.darkness],['🌡 Room Temp',d.roomtemp],
+    ['🔊 Noise',d.noise],['🛏 Bed',d.bedcomfort],
+    ['☀️ Sunlight',d.sunlight],['💧 Hydration',d.hydration],
+  ];
+  document.getElementById('summaryGrid').innerHTML=rows.map(([l,v])=>`<div style="background:var(--glass);border:1px solid var(--rim);border-radius:12px;padding:12px 16px;display:flex;flex-direction:column;gap:3px;"><span style="font-size:.7rem;color:var(--txt2);">${l}</span><span style="font-size:.88rem;font-weight:500;color:var(--txt);text-transform:capitalize;">${v||'—'}</span></div>`).join('');
+}
+
+/* ── API ── */
+async function callClaude(prompt,maxTok){
+  // Mock response for demo purposes - replace with actual API call when you have an API key
+  if(prompt.includes('Sleep analyst.')){
+    return `{"score":72,"quality_label":"Fair","summary":"Your sleep shows moderate quality with room for improvement through better consistency and reduced caffeine intake.","metrics":[{"icon":"⏱️","value":"7h 0m","label":"Duration"},{"icon":"💤","value":"78%","label":"Efficiency"},{"icon":"🧠","value":"Light","label":"REM Est."},{"icon":"❤️","value":"Moderate","label":"Recovery"},{"icon":"⚡","value":"Low","label":"Energy"},{"icon":"🌙","value":"Delayed","label":"Circadian"}],"analysis":"Your sleep duration is adequate at around 7 hours, but efficiency could be improved. The delayed circadian rhythm suggests your bedtime might be too late for optimal recovery. Moderate stress levels are impacting your ability to fall asleep quickly. Consider establishing a consistent sleep schedule and reducing caffeine consumption in the afternoon. Your hydration is good, which supports better sleep quality. The fair overall quality indicates you're getting by but not thriving - small adjustments could make a significant difference.","tips":[{"title":"Establish a consistent bedtime routine","text":"Go to bed and wake up at the same time every day, even on weekends, to regulate your circadian rhythm."},{"title":"Reduce afternoon caffeine","text":"Avoid caffeine after 2 PM as it can interfere with your ability to fall asleep and reduce sleep quality."},{"title":"Create a cool, dark sleep environment","text":"Keep your bedroom cool (around 65°F/18°C) and completely dark to promote better sleep."},{"title":"Practice relaxation before bed","text":"Try deep breathing or meditation 30 minutes before bedtime to reduce stress and anxiety."},{"title":"Limit screen time","text":"Avoid screens at least 1 hour before bed as blue light can suppress melatonin production."}]}`;
+  }else{
+    return `{"youtube_videos":[{"title":"How to Improve Sleep Quality","channel":"Sleep Foundation","search_query":"improve sleep quality","video_id":""},{"title":"Circadian Rhythm and Sleep","channel":"Huberman Lab","search_query":"circadian rhythm sleep","video_id":""},{"title":"Stress and Sleep Connection","channel":"Matthew Walker","search_query":"stress sleep connection","video_id":""},{"title":"Sleep Hygiene Tips","channel":"Cleveland Clinic","search_query":"sleep hygiene tips","video_id":""}]}`;
+  }
+}
+function safeJSON(raw){
+  let t=raw.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+  const s=t.indexOf('{'),e=t.lastIndexOf('}');if(s!==-1&&e!==-1)t=t.slice(s,e+1);
+  try{return JSON.parse(t);}catch(_){
+    for(let i=t.length-1;i>0;i--){
+      if(',}]'.includes(t[i])){
+        try{return JSON.parse(t.slice(0,i).replace(/,\s*$/,'')+'}}');}catch(__) {}
+        try{return JSON.parse(t.slice(0,i).replace(/,\s*$/,'')+']}}');}catch(__) {}
+      }
+    }
+    throw new Error('Could not parse response. Please try again.');
+  }
+}
+
+const loadMsgs=['Reading circadian patterns…','Computing sleep efficiency…','Analysing lifestyle factors…','Checking recovery signals…','Personalising your report…','Almost ready…'];
+
+async function analyzeSleep(){
+  const data=getFormData();
+  document.getElementById('analyzeBtn').disabled=true;
+  document.getElementById('errorMsg').classList.remove('show');
+  document.getElementById('step5').style.display='none';
+  document.getElementById('stepsRow').style.display='none';
+  const ld=document.getElementById('loading');ld.classList.add('show');
+  let prog=0,mi=0;
+  const pi=setInterval(()=>{prog=Math.min(92,prog+Math.random()*8);document.getElementById('loadBar').style.width=prog+'%';document.getElementById('loadMsg').textContent=loadMsgs[Math.floor(mi++/2)%loadMsgs.length];},700);
+  const ctx=`Age:${data.age},Gender:${data.gender},Bedtime:${data.bedtime},Wake:${data.waketime},Duration:${data.duration}h,Wakeups:${data.wakeups},Nap:${data.nap},Quality:${data.quality},Mood:${data.mood},Stress:${data.stress}/10,Anxiety:${data.anxiety}/10,Emotion:${data.emotion}/10,FallAsleep:${data.fallasleep},Consistency:${data.consistency},Symptoms:${data.symptoms.join(',')||'none'},Caffeine:${data.caffeine}cups,LastCaffeine:${data.lastcaffeine},Alcohol:${data.alcohol},LastMeal:${data.lastmeal},SleepAid:${data.sleepaid},Hydration:${data.hydration},Diet:${data.diet.join(',')||'none'},Exercise:${data.exercise},ExerciseTime:${data.exercisetime},Lifestyle:${data.lifestyle},DailySteps:${data.steps},SittingHours:${data.sitting},Sunlight:${data.sunlight},Activities:${data.activities.join(',')||'none'},Screens:${data.screens},Darkness:${data.darkness},RoomTemp:${data.roomtemp},Noise:${data.noise},BedComfort:${data.bedcomfort},Partner:${data.partner},Phone:${data.phone},MentalHealth:${data.mentalhealth},EveningRoutine:${data.routine.join(',')||'none'}`;
+  const p1=`Sleep analyst. Return ONLY raw JSON no markdown. Data:${ctx}
+JSON:{"score":72,"quality_label":"Fair","summary":"One sentence.","metrics":[{"icon":"⏱️","value":"7h 0m","label":"Duration"},{"icon":"💤","value":"78%","label":"Efficiency"},{"icon":"🧠","value":"Light","label":"REM Est."},{"icon":"❤️","value":"Moderate","label":"Recovery"},{"icon":"⚡","value":"Low","label":"Energy"},{"icon":"🌙","value":"Delayed","label":"Circadian"}],"analysis":"Para1. Para2. Para3.","tips":[{"title":"T","text":"Advice."},{"title":"T","text":"Advice."},{"title":"T","text":"Advice."},{"title":"T","text":"Advice."},{"title":"T","text":"Advice."}]}`;
+  const p2=`ONLY raw JSON. 4 YouTube sleep improvement videos for:${ctx}
+{"youtube_videos":[{"title":"T","channel":"C","search_query":"q","video_id":""},{"title":"T","channel":"C","search_query":"q","video_id":""},{"title":"T","channel":"C","search_query":"q","video_id":""},{"title":"T","channel":"C","search_query":"q","video_id":""}]}`;
+  try{
+    const[r1,r2]=await Promise.all([callClaude(p1,2200),callClaude(p2,700)]);
+    clearInterval(pi);document.getElementById('loadBar').style.width='100%';
+    await new Promise(r=>setTimeout(r,400));
+    showResults({...safeJSON(r1),youtube_videos:(safeJSON(r2).youtube_videos||[])},data);
+  }catch(e){
+    clearInterval(pi);ld.classList.remove('show');
+    document.getElementById('step5').style.display='';document.getElementById('stepsRow').style.display='';
+    const em=document.getElementById('errorMsg');em.textContent='⚠️ '+e.message;em.classList.add('show');
+    document.getElementById('analyzeBtn').disabled=false;
+  }
+}
+
+/* ── SHOW RESULTS ── */
+function showResults(r,data){
+  document.getElementById('loading').classList.remove('show');
+  document.getElementById('results').classList.add('show');
+  const score=Math.min(100,Math.max(0,r.score||50));
+  document.getElementById('scoreNum').textContent=score;
+  const circ=2*Math.PI*90;
+  setTimeout(()=>{document.getElementById('ringGlow').style.strokeDasharray=circ;document.getElementById('ringGlow').style.strokeDashoffset=circ-(score/100)*circ;},150);
+  const col=score>=80?'var(--teal)':score>=60?'var(--blue)':score>=40?'var(--amber)':'var(--rose)';
+  document.getElementById('ringGlow').style.stroke=col;
+  document.getElementById('scoreNum').style.webkitTextFillColor=col;
+  const cols={Excellent:'var(--teal)',Good:'var(--blue)',Fair:'var(--amber)',Poor:'var(--rose)',Critical:'var(--rose)'};
+  const cc=cols[r.quality_label]||'var(--blue)',chip=document.getElementById('qualChip');
+  chip.textContent='● '+(r.quality_label||'Fair');
+  chip.style.cssText=`background:${cc}18;border:1px solid ${cc}44;color:${cc};`;
+  document.getElementById('heroSummary').textContent=r.summary||'';
+  document.getElementById('metricsStrip').innerHTML=(r.metrics||[]).map(m=>`<div class="metric-tile"><div class="metric-ico">${m.icon}</div><div class="metric-val">${m.value}</div><div class="metric-lbl">${m.label}</div></div>`).join('');
+  document.getElementById('analysisText').innerHTML=(r.analysis||'').split(/\n+/).filter(Boolean).map(p=>`<p>${p}</p>`).join('');
+  document.getElementById('tipsGrid').innerHTML=(r.tips||[]).map((t,i)=>`<div class="tip-card"><div class="tip-badge">${i+1}</div><div><div class="tip-title">${t.title||''}</div><div class="tip-body">${t.text||''}</div></div></div>`).join('');
+  const s=score,msgs={critical:'Your sleep is in distress — Yoga Nidra is urgently restorative for you tonight. Even 20 minutes will deeply reset your nervous system and lower the elevated cortisol that chronic poor sleep produces.',poor:'Your score indicates significant under-rest. Practicing Yoga Nidra nightly for two weeks can measurably improve deep-sleep architecture. Begin with the 20-minute session.',fair:'Yoga Nidra practiced 3–4 nights per week will meaningfully lift your sleep quality — calming the mind, deepening sleep cycles, and lowering baseline stress. Try the 30-minute session.',good:'A solid sleep foundation. Use Yoga Nidra on high-stress days or when you feel emotionally depleted to prevent sleep debt from accumulating.',excellent:'Exceptional sleep hygiene. Yoga Nidra can serve as a supercharger here — amplifying delta-wave restoration and mental clarity. The 45-minute practice once a week will elevate your already strong recovery.'};
+  document.getElementById('ynPersonalized').textContent=msgs[s<35?'critical':s<50?'poor':s<68?'fair':s<84?'good':'excellent'];
+  const ynVids=[{t:'20-Min Yoga Nidra for Deep Sleep',c:'Ally Boothroyd',q:'yoga nidra deep sleep guided 20 minutes'},{t:'Yoga Nidra: Body Scan Meditation',c:'Insight Timer',q:'yoga nidra body scan sleep meditation guided'},{t:'Yoga Nidra for Beginners',c:'Yoga with Adriene',q:'yoga with adriene yoga nidra beginners sleep'},{t:'Deep Yoga Nidra — Full Session',c:'Great Meditation',q:'yoga nidra sleep full body meditation 45 min'}];
+  document.getElementById('ynYtGrid').innerHTML=ynVids.map(v=>`<a class="yt-card" href="https://www.youtube.com/results?search_query=${encodeURIComponent(v.q)}" target="_blank" rel="noopener"><div class="yt-thumb" style="background:linear-gradient(135deg,#2d1b69,#1e1b4b);"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:36px;">🪷</div><div class="yt-play">▶</div></div><div class="yt-meta"><div class="yt-title">${v.t}</div><div class="yt-ch">📺 ${v.c}</div></div></a>`).join('');
+  document.getElementById('ytGrid').innerHTML=(r.youtube_videos||[]).map(v=>{const url=v.video_id?`https://www.youtube.com/watch?v=${v.video_id}`:`https://www.youtube.com/results?search_query=${encodeURIComponent(v.search_query||'')}`;const thumb=v.video_id?`<img src="https://img.youtube.com/vi/${v.video_id}/mqdefault.jpg" alt="" onerror="this.style.display='none'">`:`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;background:linear-gradient(135deg,#0d1529,#1e1b4b)">🎬</div>`;return`<a class="yt-card" href="${url}" target="_blank" rel="noopener"><div class="yt-thumb">${thumb}<div class="yt-play">▶</div></div><div class="yt-meta"><div class="yt-title">${v.title||''}</div><div class="yt-ch">📺 ${v.channel||''}</div></div></a>`;}).join('');
+  setTimeout(()=>document.querySelectorAll('.reveal').forEach((el,i)=>setTimeout(()=>el.classList.add('visible'),i*80)),100);
+  document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+/* ── YOGA NIDRA TIMER ── */
+let ynDur=20*60,ynSecs=20*60,ynRunning=false,ynClk=null,ynBrTO=null,ynPhBase='inhale';
+const ynPhases=[{at:1200,t:'Settle in — release all effort'},{at:960,t:'Set your Sankalpa — your intention'},{at:720,t:'Body rotation — scan each part slowly'},{at:480,t:'Count breaths from 27 down to 1…'},{at:240,t:'Pairs of opposites — heavy and light'},{at:60,t:'Visualisation — watch images arise and dissolve'},{at:0,t:'Return slowly… wiggle fingers and toes'}];
+function getPhase(s){for(const p of ynPhases)if(s<=p.at+80)return p.t;return ynPhases[0].t;}
+function fmtT(s){return`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;}
+function setYNDur(min,btn){document.querySelectorAll('.yn-dur-btn').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');ynDur=min*60;ynSecs=min*60;document.getElementById('ynTimerBig').textContent=fmtT(ynSecs);}
+function toggleYN(){
+  startAudio();
+  if(!ynRunning){
+    ynRunning=true;document.getElementById('ynMainBtn').textContent='⏸ Pause';document.getElementById('ynTimerBig').classList.add('show');
+    ynClk=setInterval(()=>{
+      if(ynSecs<=0){clearInterval(ynClk);clearTimeout(ynBrTO);ynRunning=false;document.getElementById('ynMainBtn').textContent='✓ Complete';document.getElementById('ynPhaseTxt').textContent='🌸 Namaste. Rest in stillness.';document.getElementById('ynBreathLbl').textContent='complete';document.getElementById('ynOrb').classList.remove('inhaling','exhaling');return;}
+      ynSecs--;document.getElementById('ynTimerBig').textContent=fmtT(ynSecs);document.getElementById('ynPhaseTxt').textContent=getPhase(ynSecs);
+    },1000);
+    function bc(){
+      if(!ynRunning)return;const orb=document.getElementById('ynOrb'),lbl=document.getElementById('ynBreathLbl');
+      if(ynPhBase==='inhale'){orb.classList.remove('exhaling');orb.classList.add('inhaling');lbl.textContent='inhale…';ynPhBase='exhale';}
+      else{orb.classList.remove('inhaling');orb.classList.add('exhaling');lbl.textContent='exhale…';ynPhBase='inhale';}
+      ynBrTO=setTimeout(bc,4000);
+    }
+    bc();document.getElementById('ynPhaseTxt').textContent=getPhase(ynSecs);
+  } else {
+    ynRunning=false;clearInterval(ynClk);clearTimeout(ynBrTO);
+    document.getElementById('ynMainBtn').textContent='▶ Resume';document.getElementById('ynBreathLbl').textContent='paused';document.getElementById('ynOrb').classList.remove('inhaling','exhaling');
+  }
+}
+function resetYN(){
+  ynRunning=false;ynSecs=ynDur;ynPhBase='inhale';clearInterval(ynClk);clearTimeout(ynBrTO);
+  document.getElementById('ynTimerBig').textContent=fmtT(ynSecs);document.getElementById('ynTimerBig').classList.remove('show');
+  document.getElementById('ynMainBtn').textContent='🧘 Begin Session';document.getElementById('ynBreathLbl').textContent='tap to begin';
+  document.getElementById('ynPhaseTxt').textContent='Select a duration and tap the lotus to begin your session';document.getElementById('ynOrb').classList.remove('inhaling','exhaling');
+}
+
+/* ── RESET ALL ── */
+function resetAll(){
+  document.getElementById('results').classList.remove('show');
+  document.querySelectorAll('.reveal').forEach(e=>e.classList.remove('visible'));
+  document.getElementById('stepsRow').style.display='';
+  for(let i=0;i<TOTAL;i++){
+    const s=document.getElementById('step'+i),p=document.getElementById('pip'+i);
+    if(s)s.classList.remove('active');
+    if(p)p.classList.remove('active','done');
+  }
+  curStep=0;document.getElementById('step0').classList.add('active');document.getElementById('pip0').classList.add('active');
+  document.getElementById('analyzeBtn').disabled=false;document.getElementById('errorMsg').classList.remove('show');
+  resetYN();window.scrollTo({top:0,behavior:'smooth'});
+}
+</script>
+</body>
+</html>
